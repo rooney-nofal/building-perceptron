@@ -1,0 +1,22 @@
+# Python virtual environment
+# Hundreds of MB, machine-specific, rebuilt from requirements.txt
+.venv/
+
+# Python cache files
+# Compiled bytecode that Python generates automatically
+__pycache__/
+*.pyc
+
+# Jupyter auto-saved notebook backups, not real work
+.ipynb_checkpoints/
+
+# Professor's source documents: his material, not ours to republish
+docs/source/
+
+# VS Code preferences, specific to this computer
+.vscode/
+
+# Operating system clutter
+Thumbs.db
+desktop.ini
+.DS_Store

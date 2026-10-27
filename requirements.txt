@@ -1,0 +1,14 @@
+# Core numerical and data handling
+numpy==2.5.4            # Array maths: powers our Perceptron (weights, dot product, update rule)
+pandas==3.1.0           # Table handling: loads the CSV, cleans it, explores it
+
+# Visualisation
+matplotlib==3.11.2      # Base plotting: convergence curve, decision boundary, confusion matrix
+seaborn==0.13.2         # Statistical plots built on matplotlib: heatmap, distributions by class
+
+# Machine learning support (the Perceptron itself is written by hand, from scratch)
+scikit-learn==1.9.1     # Train/test split, standard scaling, PCA, evaluation metrics
+Boruta==0.4.3           # All-relevant feature selection (Kursa & Rudnicki, 2010)
+
+# Notebook
+ipykernel==7.4.0        # Lets VS Code run the Jupyter notebook deliverable
