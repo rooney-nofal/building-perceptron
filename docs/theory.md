@@ -398,6 +398,111 @@ millions of a deep network. And each one stays readable — after training, the 
 
 ### 2.3 The learning rule
 
+#### The rule
+
+For each training example the Perceptron predicts, measures how wrong it was, and nudges
+every weight in the direction that would have reduced the mistake.
+
+$$\text{error} = y - \hat{y}$$
+
+$$w_i \leftarrow w_i + \eta \, (y - \hat{y}) \, x_i$$
+
+$$b \leftarrow b + \eta \, (y - \hat{y})$$
+
+| Term | Name | What it is |
+| --- | --- | --- |
+| $y$ | True label | What the answer should have been: 1 or 0 |
+| $\hat{y}$ | Prediction | What the model answered: 1 or 0 |
+| $y - \hat{y}$ | Error | Only three possible values: $+1$, $0$ or $-1$ |
+| $\eta$ | Learning rate ("eta") | The size of each step. Typically 0.01 to 0.1 |
+| $\leftarrow$ | Assignment | "becomes" — the new value replaces the old |
+
+#### Three cases, and only three
+
+Because $y$ and $\hat{y}$ are each either 0 or 1, the error can only take three values:
+
+| Situation | $y$ | $\hat{y}$ | Error | What happens |
+| --- | --- | --- | --- | --- |
+| Correct, positive | 1 | 1 | 0 | Nothing. No update at all |
+| Correct, negative | 0 | 0 | 0 | Nothing |
+| Missed a positive | 1 | 0 | $+1$ | Weights move **toward** this example |
+| False alarm | 0 | 1 | $-1$ | Weights move **away** from this example |
+
+That is the entire algorithm. **The Perceptron learns only from its mistakes** — a correct
+prediction changes nothing whatsoever.
+
+#### Why moving "toward" the example works
+
+Suppose the model should have answered 1 but answered 0. The error is $+1$, so every
+weight gains $\eta x_i$ — in vector terms, a scaled copy of $\mathbf{x}$ is added to
+$\mathbf{w}$, and $\eta$ is added to $b$. If the same example came round again, the new
+net input would be:
+
+$$z_{\text{new}} = (\mathbf{w} + \eta \mathbf{x}) \cdot \mathbf{x} + (b + \eta) = z_{\text{old}} + \eta \, (\lVert \mathbf{x} \rVert^2 + 1)$$
+
+Since $\lVert \mathbf{x} \rVert^2 + 1$ is always positive, $z$ has increased — pushing the
+model toward answering 1 next time. The mirror argument applies to a false alarm. The rule
+is not a heuristic: each update provably moves the score in the right direction.
+
+#### The learning rate
+
+$\eta$ controls how far each correction goes. Too large and the boundary lurches past good
+solutions; too small and training crawls.
+
+One subtlety worth knowing: if the weights start at exactly zero, $\eta$ has **no effect at
+all** on which examples get misclassified. Every weight and the bias are simply scaled by
+$\eta$ together, and the sign of $\mathbf{w} \cdot \mathbf{x} + b$ — which is all the
+prediction depends on — is unchanged. The learning rate only begins to matter once the
+weights are initialised to something non-zero, because then it sets the size of the
+corrections *relative* to those starting values.
+
+#### Does it always work? The convergence theorem
+
+Novikoff proved in 1962 that **if the two classes can be separated by a straight boundary,
+the Perceptron rule reaches a solution after a finite number of updates** — guaranteed,
+regardless of the starting weights.
+
+The converse is the catch: **if the classes are not linearly separable, the rule never
+settles.** It keeps correcting forever, the weights oscillate, and the error count never
+reaches zero. The algorithm has no way to recognise that no perfect answer exists.
+
+#### Other learning rules
+
+- **The delta rule (Widrow & Hoff, 1960)**, used in Adaline. It computes the error from
+  the continuous net input $z$ rather than the thresholded output $\hat{y}$, which makes
+  the error differentiable and the update a step of gradient descent on squared error.
+  Because of that, it converges to a stable solution even when the data is not separable.
+  It is the ancestor of the gradient descent used to train every modern neural network.
+- **The pocket algorithm (Gallant)**, a direct repair of the oscillation problem: run the
+  ordinary Perceptron rule, but keep a saved copy of the best weights seen so far and
+  return those at the end, rather than whatever the last update happened to leave behind.
+
+#### In this project
+
+The Breast Cancer Wisconsin data is close to linearly separable, but not perfectly. By the
+theorem, our error count will therefore **fall quickly and then oscillate rather than reach
+zero**. That is the algorithm behaving exactly as proved — not a bug in our code — and the
+convergence plot in Phase 6 will show it. We return to it in section 2.6 and in the
+conclusion.
+
+**Sources for this section**
+
+- Rosenblatt, F. (1958). "The perceptron: a probabilistic model for information storage
+  and organization in the brain." *Psychological Review*, 65(6), 386–408 — the learning
+  rule as originally proposed.
+  [Full text](https://homepages.math.uic.edu/~lreyzin/papers/rosenblatt58.pdf)
+- Novikoff, A. B. (1962). "On convergence proofs on perceptrons." *Proceedings of the
+  Symposium on the Mathematical Theory of Automata*, 12, 615–622 — the convergence
+  theorem. [Original report, DTIC](https://apps.dtic.mil/sti/tr/pdf/AD0298258.pdf) ·
+  [Lecture treatment, Oregon State](https://classes.engr.oregonstate.edu/eecs/fall2023/ai534-400/unit2/convergence.html)
+- Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer,
+  section 4.1.7 — the perceptron learning algorithm and its convergence behaviour.
+  [Free PDF, Microsoft Research](https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/)
+- Widrow, B., & Hoff, M. E. (1960). "Adaptive switching circuits." *IRE WESCON Convention
+  Record*, Part 4, 96–104 — the delta rule and Adaline.
+- Gallant, S. I. (1990). "Perceptron-based learning algorithms." *IEEE Transactions on
+  Neural Networks* — the pocket algorithm.
+
 ### 2.4 The activation function
 
 ### 2.5 The training process
