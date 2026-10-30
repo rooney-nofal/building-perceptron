@@ -768,3 +768,59 @@ being able to state them precisely is what the brief's final question asks for.
   condition. [Original report, DTIC](https://apps.dtic.mil/sti/tr/pdf/AD0298258.pdf)
 ---
 
+## Bibliography:
+
+All sources cited in this document, in alphabetical order by author. Each section above
+also lists the specific sources supporting its claims.
+
+- Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer.
+  [Free PDF, Microsoft Research](https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/)
+- Cortes, C., & Vapnik, V. (1995). "Support-vector networks." *Machine Learning*, 20(3),
+  273–297. [doi:10.1007/BF00994018](https://doi.org/10.1007/BF00994018)
+- Dua, D., & Graff, C. *Breast Cancer Wisconsin (Diagnostic) Data Set*. UCI Machine
+  Learning Repository.
+  [Dataset page](https://archive.ics.uci.edu/dataset/17/breast+cancer+wisconsin+diagnostic)
+- Gallant, S. I. (1990). "Perceptron-based learning algorithms." *IEEE Transactions on
+  Neural Networks*.
+- Goodfellow, I., Bengio, Y., & Courville, A. (2016). *Deep Learning*. MIT Press.
+  [Free online](https://www.deeplearningbook.org/)
+- Google. *AI Experiments*.
+  [experiments.withgoogle.com](https://experiments.withgoogle.com/collection/ai)
+- Grinsztajn, L., Oyallon, E., & Varoquaux, G. (2022). "Why do tree-based models still
+  outperform deep learning on typical tabular data?" *NeurIPS 2022, Datasets and
+  Benchmarks Track*. [arXiv:2207.08815](https://arxiv.org/abs/2207.08815)
+- Gulshan, V., et al. (2016). "Development and Validation of a Deep Learning Algorithm for
+  Detection of Diabetic Retinopathy in Retinal Fundus Photographs." *JAMA*, 316(22),
+  2402–2410. [doi:10.1001/jama.2016.17216](https://doi.org/10.1001/jama.2016.17216)
+- Jumper, J., et al. (2021). "Highly accurate protein structure prediction with AlphaFold."
+  *Nature*, 596, 583–589.
+  [doi:10.1038/s41586-021-03819-2](https://doi.org/10.1038/s41586-021-03819-2)
+- LeCun, Y., Bengio, Y., & Hinton, G. (2015). "Deep learning." *Nature*, 521(7553),
+  436–444. [doi:10.1038/nature14539](https://doi.org/10.1038/nature14539)
+- McCulloch, W. S., & Pitts, W. (1943). "A logical calculus of the ideas immanent in
+  nervous activity." *Bulletin of Mathematical Biophysics*, 5, 115–133.
+  [doi:10.1007/BF02478259](https://doi.org/10.1007/BF02478259)
+- Minsky, M., & Papert, S. (1969). *Perceptrons: An Introduction to Computational
+  Geometry*. MIT Press.
+- Mitchell, T. (1997). *Machine Learning*. McGraw-Hill.
+- The Nobel Prize in Chemistry 2024.
+  [nobelprize.org](https://www.nobelprize.org/prizes/chemistry/2024/summary/)
+- Novikoff, A. B. (1962). "On convergence proofs on perceptrons." *Proceedings of the
+  Symposium on the Mathematical Theory of Automata*, 12, 615–622.
+  [Original report, DTIC](https://apps.dtic.mil/sti/tr/pdf/AD0298258.pdf)
+- Rosenblatt, F. (1958). "The perceptron: a probabilistic model for information storage and
+  organization in the brain." *Psychological Review*, 65(6), 386–408.
+  [Full text](https://homepages.math.uic.edu/~lreyzin/papers/rosenblatt58.pdf)
+- Rudin, C. (2019). "Stop explaining black box machine learning models for high stakes
+  decisions and use interpretable models instead." *Nature Machine Intelligence*, 1,
+  206–215. [arXiv:1811.10154](https://arxiv.org/abs/1811.10154)
+- Rumelhart, D. E., Hinton, G. E., & Williams, R. J. (1986). "Learning representations by
+  back-propagating errors." *Nature*, 323, 533–536.
+  [doi:10.1038/323533a0](https://doi.org/10.1038/323533a0)
+- Samuel, A. L. (1959). "Some Studies in Machine Learning Using the Game of Checkers."
+  *IBM Journal of Research and Development*, 3(3), 210–229.
+  [Full text, MIT](https://people.csail.mit.edu/brooks/idocs/Samuel.pdf)
+- Vaswani, A., et al. (2017). "Attention Is All You Need." *Advances in Neural Information
+  Processing Systems 30 (NeurIPS 2017)*. [arXiv:1706.03762](https://arxiv.org/abs/1706.03762)
+- Widrow, B., & Hoff, M. E. (1960). "Adaptive switching circuits." *IRE WESCON Convention
+  Record*, Part 4, 96–104.
