@@ -438,7 +438,7 @@ weight gains $\eta x_i$ — in vector terms, a scaled copy of $\mathbf{x}$ is ad
 $\mathbf{w}$, and $\eta$ is added to $b$. If the same example came round again, the new
 net input would be:
 
-$$z_{\text{new}} = (\mathbf{w} + \eta \mathbf{x}) \cdot \mathbf{x} + (b + \eta) = z_{\text{old}} + \eta \, (\lVert \mathbf{x} \rVert^2 + 1)$$
+$$z_{\text{new}} = (\mathbf{w} + \eta \mathbf{x}) \cdot \mathbf{x} + (b + \eta) = z_{\text{old}} + \eta \, (\mathbf{x} \cdot \mathbf{x} + 1)$$
 
 Since $\lVert \mathbf{x} \rVert^2 + 1$ is always positive, $z$ has increased — pushing the
 model toward answering 1 next time. The mirror argument applies to a false alarm. The rule
@@ -582,6 +582,101 @@ algorithm disagree.
   [Free PDF, Microsoft Research](https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/)
 
 ### 2.5 The training process
+
+Section 2.3 defined how to correct the weights after a single example. Training is the
+loop that applies that correction across the whole dataset, repeatedly, until the model
+stops improving or we run out of patience.
+
+#### The algorithm
+
+```text
+1. Initialise the weights and the bias
+
+2. Repeat for each epoch (one full pass over the training data):
+
+     errors = 0
+
+     For each example (x, y) in the training set:
+         z     = w · x + b              compute the net input
+         ŷ     = f(z)                   apply the step function
+         error = y - ŷ                  compare with the truth
+
+         If error is not zero:
+             w      = w + η * error * x  correct every weight
+             b      = b + η * error      correct the bias
+             errors = errors + 1         count this mistake
+
+     Record errors for this epoch
+
+     If errors == 0:
+         stop early — the data is now perfectly separated
+
+3. Return the learned weights and bias
+```
+
+#### The four decisions inside that loop
+
+**Initialisation.** The weights have to start somewhere. Two common choices: all zeros, or
+small random values drawn from a normal distribution. We use small random values with a
+fixed random seed — random, so that the learning rate has a meaningful effect (see section
+2.3); seeded, so that every run of the notebook produces identical results. Reproducibility
+is not optional in work that will be graded and re-run by someone else.
+
+**An epoch** is one complete pass through the training set. A single pass almost never
+suffices, because correcting the weights for one example can break a case that was already
+right. Learning comes from repetition.
+
+**Stopping.** Two conditions end training: either an epoch completes with zero errors — the
+data is separated and no further update can occur — or we hit a maximum number of epochs we
+set in advance. For data that is not linearly separable, the maximum is the only thing that
+ever stops it, which is why it must exist.
+
+**Order matters.** Updates are applied immediately, one example at a time, so the order in
+which examples are visited changes the path training takes. This is *online* (or
+*stochastic*) learning, as opposed to *batch* learning where corrections are accumulated
+across the whole dataset and applied once. Rosenblatt's rule is online by design.
+
+#### What the error count tells us
+
+Recording `errors` for each epoch gives us a **convergence curve** — a plot of mistakes
+against epoch — and it is the single most informative diagnostic we have:
+
+| Curve shape | What it means |
+| --- | --- |
+| Falls to zero and stays there | The data is linearly separable and the Perceptron found the boundary |
+| Falls fast, then oscillates around a low value | Not separable; the rule keeps correcting forever, exactly as the theorem predicts |
+| Stays high and flat | Something is wrong — most often features on wildly different scales |
+| Swings wildly | The learning rate is too large |
+
+We produce this plot twice: on synthetic data in Phase 3, and on the real patient data in
+Phase 6.
+
+#### In this project
+
+Training will be fast — 569 examples, 30 features, a few hundred epochs: a fraction of a
+second on your CPU. We expect the second curve shape above, since the data is nearly but
+not perfectly separable.
+
+One critical point that belongs here rather than later: **feature scaling must happen
+before training, and must be fitted on the training set only.** The Perceptron adds `η·x`
+to the weights, so a feature measured in the thousands (`area_mean` ≈ 1000) produces
+updates a thousand times larger than one measured in hundredths (`smoothness_mean` ≈ 0.1).
+Without standardisation the large-valued features dominate entirely and training behaves
+badly. This is the single most common reason this project fails.
+
+**Sources for this section**
+
+- Rosenblatt, F. (1958). "The perceptron: a probabilistic model for information storage
+  and organization in the brain." *Psychological Review*, 65(6), 386–408 — the training
+  procedure as originally described.
+  [Full text](https://homepages.math.uic.edu/~lreyzin/papers/rosenblatt58.pdf)
+- Novikoff, A. B. (1962). "On convergence proofs on perceptrons." *Proceedings of the
+  Symposium on the Mathematical Theory of Automata*, 12, 615–622 — why training terminates
+  on separable data and not otherwise.
+  [Original report, DTIC](https://apps.dtic.mil/sti/tr/pdf/AD0298258.pdf)
+- Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer,
+  section 4.1.7 — the training loop, online updates, and convergence.
+  [Free PDF, Microsoft Research](https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/)
 
 ### 2.6 The limitations of the Perceptron
 
