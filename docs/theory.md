@@ -355,7 +355,11 @@ more convenient, because then the bias can be learned exactly like a weight.
 
 #### Stage 2 — the decision
 
-$$\hat{y} = f(z) = \begin{cases} 1 & \text{if } z \geq 0 \\ 0 & \text{otherwise} \end{cases}$$
+$$\hat{y} = f(z)$$
+
+$$f(z) = 1 \quad \text{if } z \geq 0$$
+
+$$f(z) = 0 \quad \text{if } z < 0$$
 
 | Term | Name | What it is |
 | --- | --- | --- |
