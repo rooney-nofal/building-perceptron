@@ -262,9 +262,135 @@ properties. Whatever carries it has to be learned from the text itself.
 
 ## Part 2 — The Perceptron
 
+
+
 ### 2.1 What is a Perceptron? The biological neuron and the artificial one
 
+#### What it is
+
+The Perceptron is the earliest artificial neuron that could learn from examples. Frank
+Rosenblatt — a psychologist, not a computer scientist — introduced it in 1957–1958 at the
+Cornell Aeronautical Laboratory. It started as a simulation on an IBM 704 computer and
+then became dedicated hardware: the Mark I Perceptron, a machine that classified images
+seen through a 20 × 20 grid of 400 photocells, its weights physically stored in
+motor-driven potentiometers.
+
+As a model, the Perceptron is a **supervised binary classifier**: it takes a list of
+numbers (the features), combines them into a single score, and answers one of two
+classes — 1 or 0, malignant or benign. *Supervised*, because it learns from examples
+that already carry the correct answer.
+
+#### The biological neuron
+
+A neuron receives signals from other neurons through its **dendrites**. Each connection —
+a **synapse** — has a strength, and pushes the neuron either toward firing (excitatory)
+or away from it (inhibitory). The cell body (the **soma**) integrates everything that
+arrives. If the combined signal crosses a **threshold**, the neuron fires an electrical
+impulse down its **axon** to the neurons downstream; below the threshold, nothing
+happens. The impulse is all-or-nothing — a neuron never fires "a little".
+
+Learning, in the brain, is largely a change in synaptic strengths: connections that prove
+useful are reinforced.
+
+#### From biology to mathematics — two steps
+
+**McCulloch & Pitts (1943)** built the first mathematical neuron: binary inputs, a
+threshold, a yes/no output. They proved that networks of such units can compute logical
+functions. But the weights were set by hand — their neuron could *compute*, not *learn*.
+
+**Rosenblatt (1958)** supplied the missing piece: a rule that adjusts the weights
+automatically from labelled examples. The learning rule, not the neuron itself, is the
+invention — and it is exactly what we implement in Python in this project.
+
+#### The correspondence, term by term
+
+| Biological neuron | Perceptron |
+| --- | --- |
+| Dendrites carrying incoming signals | Inputs x₁ … xₙ |
+| Synaptic strength | Weights w₁ … wₙ |
+| Excitatory / inhibitory synapse | Positive / negative weight |
+| Soma integrating the signals | Weighted sum z = w·x + b |
+| Firing threshold | Activation function (step) |
+| All-or-nothing impulse on the axon | Output: 1 or 0 |
+
+One honest limit to this analogy: it is an inspiration, not a simulation. A real neuron
+is vastly more complex — chemical, temporal, adaptive in ways the Perceptron does not
+attempt to capture. The Perceptron borrows one idea from biology: weighted signals
+accumulating toward a threshold.
+
+**Sources for this section**
+
+- Rosenblatt, F. (1958). "The perceptron: a probabilistic model for information storage
+  and organization in the brain." *Psychological Review*, 65(6), 386–408 — the primary
+  source. [Full text](https://homepages.math.uic.edu/~lreyzin/papers/rosenblatt58.pdf) ·
+  [PubMed](https://pubmed.ncbi.nlm.nih.gov/13602029/)
+- McCulloch, W. S., & Pitts, W. (1943). "A logical calculus of the ideas immanent in
+  nervous activity." *Bulletin of Mathematical Biophysics*, 5, 115–133 — the first
+  mathematical neuron. [doi:10.1007/BF02478259](https://doi.org/10.1007/BF02478259)
+- Goodfellow, I., Bengio, Y., & Courville, A. (2016). *Deep Learning*. MIT Press,
+  chapter 1 — the historical lineage from McCulloch–Pitts to modern networks.
+  [Free online](https://www.deeplearningbook.org/)
+
+
+
 ### 2.2 The mathematical function and its terms
+
+The Perceptron computes its answer in two stages: a weighted sum, then a decision.
+
+#### Stage 1 — the net input
+
+$$z = w_1 x_1 + w_2 x_2 + \dots + w_n x_n + b = \mathbf{w} \cdot \mathbf{x} + b$$
+
+| Term | Name | What it is |
+| --- | --- | --- |
+| $x_1 \dots x_n$ | Inputs (features) | The numbers describing one example — for us, the 30 measurements of one tumour |
+| $w_1 \dots w_n$ | Weights | One per feature: how much, and in which direction, that feature pushes the decision. **These are what the Perceptron learns.** |
+| $b$ | Bias | A constant added to the sum, independent of the inputs. It shifts the decision boundary away from the origin — without it, the boundary would be forced to pass through zero |
+| $z$ | Net input | The combined score: any real number, positive or negative |
+
+Some textbooks write the rule with an explicit threshold instead: *fire if*
+$\mathbf{w} \cdot \mathbf{x} \geq \theta$. The two forms are the same equation
+rearranged, with $b = -\theta$. Moving the threshold into the sum as a bias is simply
+more convenient, because then the bias can be learned exactly like a weight.
+
+#### Stage 2 — the decision
+
+$$\hat{y} = f(z) = \begin{cases} 1 & \text{if } z \geq 0 \\ 0 & \text{otherwise} \end{cases}$$
+
+| Term | Name | What it is |
+| --- | --- | --- |
+| $f$ | Activation function | Here the Heaviside step function — detailed in section 2.4 |
+| $\hat{y}$ | Prediction ("y-hat") | The model's answer, 1 or 0 — distinct from $y$, the true label in the data |
+
+#### What the function is used for: a straight frontier
+
+Setting $z = 0$ defines the **decision boundary**: the set of points where
+$\mathbf{w} \cdot \mathbf{x} + b = 0$. With two features that is a straight line; with
+three, a flat plane; with our thirty, a 29-dimensional *hyperplane*. Everything on one
+side is classified 1, everything on the other side 0.
+
+So the Perceptron's entire job is: **find the weights and bias that place one flat
+boundary between the two classes.** A flat boundary is what "linear classifier" means —
+and it is the direct cause of the limitation we will meet in section 2.6.
+
+#### In this project
+
+Thirty features means thirty weights plus one bias: **31 numbers to learn**, against the
+millions of a deep network. And each one stays readable — after training, the weight on
+`concave points_worst` tells us how strongly that measurement pushes a tumour toward
+"malignant". This is the interpretability advantage from section 1.2, made concrete.
+
+**Sources for this section**
+
+- Rosenblatt, F. (1958). "The perceptron: a probabilistic model for information storage
+  and organization in the brain." *Psychological Review*, 65(6), 386–408 — the original
+  formulation. [Full text](https://homepages.math.uic.edu/~lreyzin/papers/rosenblatt58.pdf)
+- Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer,
+  section 4.1.7 — the perceptron as a linear discriminant, and its geometry.
+  [Free PDF, Microsoft Research](https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/)
+- Goodfellow, I., Bengio, Y., & Courville, A. (2016). *Deep Learning*. MIT Press,
+  chapter 6 — linear units and activation functions in modern notation.
+  [Free online](https://www.deeplearningbook.org/)
 
 ### 2.3 The learning rule
 
