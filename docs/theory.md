@@ -505,6 +505,82 @@ conclusion.
 
 ### 2.4 The activation function
 
+#### Which function
+
+The Perceptron uses the **Heaviside step function**, also called the unit step or threshold
+function:
+
+$$f(z) = 1 \quad \text{if } z \geq 0$$
+
+$$f(z) = 0 \quad \text{if } z < 0$$
+
+Its graph is flat at 0, jumps vertically at $z = 0$, then is flat at 1. There is no slope
+anywhere and no smooth transition — the jump is instantaneous.
+
+Some texts use $+1$ and $-1$ instead of 1 and 0. That changes the arithmetic of the update
+slightly but not the behaviour. We use 1 and 0, matching our labels: malignant = 1,
+benign = 0.
+
+#### What it is for
+
+Without it the model would output $z$, a continuous score — informative, but not an answer.
+The activation function is what turns a score into a decision. It is the mathematical
+equivalent of the biological threshold from section 2.1: below it nothing happens, at or
+above it the neuron fires.
+
+More generally, an activation function is what introduces **non-linearity**. In a
+single-layer Perceptron that hardly matters, but it is the reason deep networks can learn
+curved boundaries at all: stack linear layers with nothing between them and the whole stack
+collapses back into one linear layer, however many you use.
+
+#### Its fatal flaw, and why modern networks abandoned it
+
+The step function has a derivative of **zero everywhere it is defined**, and no derivative
+at all at $z = 0$.
+
+That matters enormously. Gradient descent — the method that trains every modern neural
+network — works by asking "how does the error change if I nudge this weight slightly?" With
+a step function the answer is always "not at all", because the output does not move until
+it jumps. There is no slope to descend.
+
+This is why the Perceptron needs its own purpose-built rule instead of gradient descent,
+and why it cannot be stacked into deep networks. Progress required replacing the step with
+a differentiable function:
+
+| Function | Shape | Why it replaced the step |
+| --- | --- | --- |
+| **Sigmoid** | Smooth S-curve from 0 to 1 | Differentiable everywhere; the output can be read as a probability |
+| **Tanh** | Smooth S-curve from $-1$ to 1 | Like sigmoid but centred on zero, which trains faster |
+| **ReLU** | 0 for negatives, $z$ for positives | Cheap to compute and does not flatten for large positive values — the default in modern deep networks |
+
+The step function is the ancestor of all three.
+
+#### In this project
+
+Our implementation will be a single line of numpy:
+
+```python
+return np.where(z >= 0, 1, 0)    # 1 when the net input reaches the threshold, else 0
+```
+
+Note the `>=`: an example landing exactly on the boundary is classified as 1. That is a
+convention rather than a law, but it must be stated and applied consistently — it is
+precisely the kind of silent discrepancy that makes two implementations of the same
+algorithm disagree.
+
+**Sources for this section**
+
+- Rosenblatt, F. (1958). "The perceptron: a probabilistic model for information storage
+  and organization in the brain." *Psychological Review*, 65(6), 386–408 — the threshold
+  function as originally specified.
+  [Full text](https://homepages.math.uic.edu/~lreyzin/papers/rosenblatt58.pdf)
+- Goodfellow, I., Bengio, Y., & Courville, A. (2016). *Deep Learning*. MIT Press,
+  chapter 6 — activation functions, differentiability, and why ReLU became the default.
+  [Free online](https://www.deeplearningbook.org/)
+- Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer,
+  section 4.1.7 — the threshold activation in the context of linear discriminants.
+  [Free PDF, Microsoft Research](https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/)
+
 ### 2.5 The training process
 
 ### 2.6 The limitations of the Perceptron
