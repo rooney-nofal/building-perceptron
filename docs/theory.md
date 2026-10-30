@@ -440,7 +440,7 @@ net input would be:
 
 $$z_{\text{new}} = (\mathbf{w} + \eta \mathbf{x}) \cdot \mathbf{x} + (b + \eta) = z_{\text{old}} + \eta \, (\mathbf{x} \cdot \mathbf{x} + 1)$$
 
-Since $\lVert \mathbf{x} \rVert^2 + 1$ is always positive, $z$ has increased — pushing the
+Since $\mathbf{x} \cdot \mathbf{x} + 1$ is always positive, $z$ has increased— pushing the
 model toward answering 1 next time. The mirror argument applies to a false alarm. The rule
 is not a heuristic: each update provably moves the score in the right direction.
 
@@ -680,6 +680,91 @@ badly. This is the single most common reason this project fails.
 
 ### 2.6 The limitations of the Perceptron
 
+#### The root limitation
+
+Everything below follows from one fact established in section 2.2: the Perceptron draws a
+**single flat boundary**. If no straight line, plane or hyperplane separates the two
+classes, the Perceptron cannot represent the solution — not because it was trained badly,
+but because the solution is not in the set of functions it can express.
+
+#### The XOR problem
+
+The standard demonstration is the exclusive-OR function. Two binary inputs, output 1 when
+they differ:
+
+| $x_1$ | $x_2$ | XOR |
+| --- | --- | --- |
+| 0 | 0 | 0 |
+| 0 | 1 | 1 |
+| 1 | 0 | 1 |
+| 1 | 1 | 0 |
+
+Plot those four points. The two outputs of 1 sit at opposite corners — $(0,1)$ and
+$(1,0)$ — and the two outputs of 0 sit at the other two opposite corners, $(0,0)$ and
+$(1,1)$. The classes are diagonally interleaved, and **no straight line can separate
+them.** No choice of weights and bias exists. Training will never converge, however long
+it runs.
+
+The contrast makes the point sharper: **AND and OR are both linearly separable**, and a
+Perceptron learns either of them in a handful of epochs. XOR is barely more complicated,
+and it is impossible. We demonstrate this empirically in Phase 3.
+
+#### The historical consequence
+
+Minsky and Papert analysed these limits rigorously in *Perceptrons* (1969). The book is
+often credited with triggering the first "AI winter" — a collapse in funding and interest
+in neural network research lasting into the 1980s.
+
+That narrative deserves a caveat, and knowing it is worth marks. Minsky and Papert were
+not wrong, and they did not claim multi-layer networks were useless; they observed that no
+*learning algorithm* was then known for training them. The missing piece arrived in 1986,
+when Rumelhart, Hinton and Williams popularised **backpropagation**, which trains networks
+of many layers — and a two-layer network solves XOR trivially. The limitation was real;
+the pessimism about it being permanent was not.
+
+#### The full list of limitations
+
+| Limitation | What it means | What solved it |
+| --- | --- | --- |
+| **Linear boundaries only** | Cannot represent XOR or any non-linearly-separable problem | Multi-layer networks with non-linear activations, trained by backpropagation |
+| **No convergence on non-separable data** | The rule oscillates forever and never settles (section 2.3) | The pocket algorithm, or the delta rule's gradient descent |
+| **No probability output** | The step function returns a hard 0 or 1 with no confidence attached | Logistic regression — a sigmoid in place of the step |
+| **Sensitive to feature scale** | Features with large values dominate the updates (section 2.5) | Standardisation before training |
+| **Binary only** | One Perceptron separates two classes, not more | One-vs-rest, or a multi-output layer |
+| **No notion of margin** | It stops at the *first* separating boundary it finds, which may sit uncomfortably close to the data and generalise poorly | Support Vector Machines, which maximise the distance to the nearest points |
+
+#### In this project
+
+Three of these will show up in our results, and we should name them in advance rather than
+discover them:
+
+1. **The convergence curve will oscillate**, because the patient data is not perfectly
+   linearly separable. Expected behaviour, not a bug.
+2. **No probabilities**, which constrains how we can evaluate. We cannot produce a
+   calibrated risk score for a patient, and a standard ROC curve has no probability to
+   work with — we return to this in Phase 6.
+3. **No margin**, so our boundary is *a* separating boundary rather than the *best* one.
+   A Support Vector Machine on the same data would likely generalise better.
+
+These are not weaknesses of our implementation. They are properties of the algorithm, and
+being able to state them precisely is what the brief's final question asks for.
+
+**Sources for this section**
+
+- Minsky, M., & Papert, S. (1969). *Perceptrons: An Introduction to Computational
+  Geometry*. MIT Press — the formal analysis of what single-layer perceptrons cannot
+  compute.
+- Rumelhart, D. E., Hinton, G. E., & Williams, R. J. (1986). "Learning representations by
+  back-propagating errors." *Nature*, 323, 533–536 — backpropagation, which made
+  multi-layer networks trainable.
+  [doi:10.1038/323533a0](https://doi.org/10.1038/323533a0) ·
+  [Harvard ADS](https://ui.adsabs.harvard.edu/abs/1986Natur.323..533R/abstract)
+- Cortes, C., & Vapnik, V. (1995). "Support-vector networks." *Machine Learning*, 20(3),
+  273–297 — maximum-margin classification, the answer to the Perceptron's margin problem.
+  [doi:10.1007/BF00994018](https://doi.org/10.1007/BF00994018) ·
+  [Full text](https://homepages.math.uic.edu/~lreyzin/papers/cortes95.pdf)
+- Novikoff, A. B. (1962). "On convergence proofs on perceptrons." *Proceedings of the
+  Symposium on the Mathematical Theory of Automata*, 12, 615–622 — the separability
+  condition. [Original report, DTIC](https://apps.dtic.mil/sti/tr/pdf/AD0298258.pdf)
 ---
 
-## Bibliography
