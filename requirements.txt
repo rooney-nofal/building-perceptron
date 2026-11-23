@@ -1,0 +1,10 @@
+# Building Perceptron — dependencies
+# Install with:  pip install -r requirements.txt
+
+numpy>=2.0              # Array maths: the engine behind the Perceptron class
+pandas>=2.2             # Tables: loads the CSV, cleans it, explores it
+matplotlib>=3.8         # Every figure in the notebook
+seaborn>=0.13           # Statistical plots: the heatmap and the distributions
+scikit-learn>=1.4       # Split, scaling, PCA and metrics — NOT the model itself
+Boruta>=0.4             # All-relevant feature selection (Kursa & Rudnicki, 2010)
+ipykernel>=6.29         # Lets VS Code and Jupyter run the notebook

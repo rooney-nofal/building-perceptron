@@ -1,0 +1,828 @@
+# Building Perceptron — Theory and Research
+
+Reference notes for the project *Building Perceptron* (La Plateforme).
+These notes answer the written questions of the brief and serve as the source material for
+the slide presentation and the README.
+
+**Every section ends with its own sources**, so any single claim can be traced to the paper
+that supports it. A consolidated bibliography is at the end.
+
+---
+
+## Part 1 — Introduction to Deep Learning
+
+### 1.1 Machine Learning and Deep Learning: definitions
+
+**Artificial Intelligence** is the broadest term: any technique that makes a machine perform
+a task we would call intelligent. **Machine Learning** is a subfield of it, and **Deep
+Learning** is a subfield of Machine Learning. They are nested, not competing ideas:
+
+> Artificial Intelligence ⊃ Machine Learning ⊃ Deep Learning
+
+#### Machine Learning
+
+Machine Learning is the study of programs that get better at a task by being exposed to
+data, instead of following rules written by hand. The standard formal definition is Tom
+Mitchell's (*Machine Learning*, McGraw-Hill, 1997):
+
+> "A computer program is said to learn from experience E with respect to some class of
+> tasks T and performance measure P, if its performance at tasks T, as measured by P,
+> improves with experience E."
+
+The term goes back to Arthur Samuel, who used it in 1959 for a checkers program that
+improved by playing games against itself.
+
+Applied to this project: **E** is the 569 patient records, **T** is classifying a tumour as
+malignant or benign, and **P** is how often that classification is correct.
+
+#### Deep Learning
+
+Deep Learning is the part of Machine Learning built on artificial neural networks with
+several layers stacked between the input and the output. "Deep" refers to that depth — the
+number of layers — and nothing more.
+
+What makes depth valuable is **representation learning**. In classical Machine Learning, a
+human decides which measurements the model is allowed to see: our dataset exists only
+because researchers chose to measure radius, texture, concavity and seven other properties
+from cell images. In Deep Learning, the network receives the raw data — the image itself —
+and discovers its own useful features, layer after layer: edges first, then shapes, then
+structures.
+
+#### Where our Perceptron sits
+
+The Perceptron is a single artificial neuron: one layer, no hidden layers. It is the
+historical ancestor of Deep Learning, not an example of it. Understanding it is how you
+understand what every single neuron inside a deep network is doing.
+
+**Sources for this section**
+
+- Mitchell, T. (1997). *Machine Learning*. McGraw-Hill, chapter 1 — the formal definition
+  of learning (E, T, P). Reproduced verbatim in course material at the
+  [University of Oxford](https://www.cs.ox.ac.uk/people/varun.kanade/teaching/ML-AIMS-MT2018/slides/slides0.pdf)
+  and [ISTA](https://cvml.ista.ac.at/courses/SML_S16/ml2016-01.pdf).
+- Samuel, A. L. (1959). "Some Studies in Machine Learning Using the Game of Checkers."
+  *IBM Journal of Research and Development*, 3(3), 210–229 — the origin of the term.
+  [Full text, MIT](https://people.csail.mit.edu/brooks/idocs/Samuel.pdf)
+- LeCun, Y., Bengio, Y., & Hinton, G. (2015). "Deep learning." *Nature*, 521(7553),
+  436–444 — the authoritative definition of Deep Learning, by its three Turing Award
+  laureates. [doi:10.1038/nature14539](https://doi.org/10.1038/nature14539)
+- Goodfellow, I., Bengio, Y., & Courville, A. (2016). *Deep Learning*. MIT Press,
+  chapter 1 — representation learning and the AI ⊃ ML ⊃ DL nesting.
+  [Free online](https://www.deeplearningbook.org/)
+
+---
+
+### 1.2 How they differ
+
+Both learn from data, so the real differences are practical: what they need, what they
+cost, and what you can read back out of them.
+
+| Criterion | Classical Machine Learning | Deep Learning |
+| --- | --- | --- |
+| **Who chooses the features** | A human expert designs them | The network learns them from raw data |
+| **Data it suits** | Structured, tabular data: rows and columns with named meanings | Unstructured data: images, audio, text, video |
+| **Amount of data needed** | Works from a few hundred examples | Usually tens of thousands or more |
+| **Computing power** | An ordinary CPU, seconds to minutes | Normally a GPU, hours to weeks |
+| **Number of parameters** | Tens to a few thousand | Millions to billions |
+| **Interpretability** | Often readable: coefficients, tree splits, feature weights | Largely opaque; needs separate explanation tools |
+| **Behaviour as data grows** | Performance tends to plateau | Performance tends to keep improving |
+
+#### The one difference that produces all the others
+
+Every row follows from the first. Once you ask a network to discover its own features
+instead of being handed them, it needs far more parameters to represent them, which needs
+far more data to fit those parameters, which needs far more computing power — and the
+features it invents are internal representations with no name in our language, which is why
+the result is hard to read.
+
+So "Deep Learning is more powerful" is the wrong summary. The accurate one is: Deep
+Learning moves the work of designing features from the human to the machine, and pays for
+it in data, computation and transparency.
+
+**Sources for this section**
+
+- LeCun, Y., Bengio, Y., & Hinton, G. (2015). "Deep learning." *Nature*, 521(7553),
+  436–444 — hand-engineered features versus learned representations, and the data and
+  computation that learning them requires.
+  [doi:10.1038/nature14539](https://doi.org/10.1038/nature14539)
+- Goodfellow, I., Bengio, Y., & Courville, A. (2016). *Deep Learning*. MIT Press,
+  chapter 1 — depth, parameter counts and scaling with data.
+  [Free online](https://www.deeplearningbook.org/)
+- Rudin, C. (2019). "Stop explaining black box machine learning models for high stakes
+  decisions and use interpretable models instead." *Nature Machine Intelligence*, 1,
+  206–215 — the interpretability row, argued specifically for high-stakes domains such as
+  healthcare. [arXiv:1811.10154](https://arxiv.org/abs/1811.10154)
+
+---
+
+### 1.3 When to use one rather than the other
+
+There is no general winner. The choice is settled by four questions about the problem in
+front of you.
+
+**1. What shape is the data?**
+Tabular data — rows of named measurements — is classical Machine Learning's home ground.
+Images, audio, text and video are Deep Learning's. This is the first question to ask, and
+it usually decides the matter on its own.
+
+**2. How much of it is there?**
+A deep network has millions of parameters to fit. Given a few hundred examples it will
+memorise the training set instead of learning from it. Classical models, with far fewer
+parameters, work comfortably at that scale.
+
+**3. Does anyone need to understand the decision?**
+In medicine, credit and law, a prediction nobody can explain may be unusable whatever its
+accuracy. Rudin argues that in high-stakes settings an interpretable model should be the
+first choice, rather than a black box explained after the fact.
+
+**4. What can you afford?**
+Deep Learning normally needs a GPU and hours to weeks of training. Classical models train
+on a laptop in seconds. On a small problem that difference is not worth paying.
+
+#### The evidence against reaching for Deep Learning by default
+
+Deep Learning dominates unstructured data. On tabular data the picture is different.
+Grinsztajn, Oyallon and Varoquaux benchmarked both families across many tabular datasets
+and found that tree-based models still outperform deep networks there — because tabular
+features are irregular, unevenly scaled and often uninformative, which suits decision trees
+and penalises neural networks.
+
+#### Applied to this project
+
+Our data is tabular: 569 rows, 30 numeric columns with names a doctor can read. It is
+small. The domain is medical, so interpretability matters. It trains in milliseconds on a
+CPU. All four questions point to classical Machine Learning — which is where the Perceptron
+sits.
+
+It is worth noticing *why* the data looks like this. The 30 features are the output of a
+feature-engineering step someone already performed: researchers took digitised images of
+fine needle aspirates of breast masses and measured radius, texture, concavity and seven
+other properties of each cell nucleus. Had we been handed the original images instead, that
+step would be ours to do — and taking over that step is precisely what Deep Learning exists
+to do.
+
+**Sources for this section**
+
+- Grinsztajn, L., Oyallon, E., & Varoquaux, G. (2022). "Why do tree-based models still
+  outperform deep learning on typical tabular data?" *NeurIPS 2022, Datasets and Benchmarks
+  Track* — the benchmark evidence on tabular data.
+  [arXiv:2207.08815](https://arxiv.org/abs/2207.08815)
+- Rudin, C. (2019). "Stop explaining black box machine learning models for high stakes
+  decisions and use interpretable models instead." *Nature Machine Intelligence*, 1,
+  206–215 — interpretability as a requirement, not a preference, in high-stakes domains.
+  [arXiv:1811.10154](https://arxiv.org/abs/1811.10154)
+- Goodfellow, I., Bengio, Y., & Courville, A. (2016). *Deep Learning*. MIT Press,
+  chapter 5 — capacity, overfitting, and why large models need large datasets.
+  [Free online](https://www.deeplearningbook.org/)
+- Dua, D., & Graff, C. *Breast Cancer Wisconsin (Diagnostic) Data Set*. UCI Machine
+  Learning Repository — the features are computed from digitised images of fine needle
+  aspirates.
+  [Dataset page](https://archive.ics.uci.edu/dataset/17/breast+cancer+wisconsin+diagnostic)
+
+---
+
+### 1.4 Three applications of Deep Learning
+
+The three applications below are each documented in a peer-reviewed publication. Together
+they show Deep Learning doing the same job in three different fields: discovering useful
+features in raw, unstructured data that no human could specify in advance.
+
+#### 1. Protein structure prediction — AlphaFold
+
+**The problem.** A protein is a chain of amino acids that folds into a precise
+three-dimensional shape, and that shape determines what the protein does. Predicting the
+shape from the sequence alone had been an open problem in biology for roughly fifty years.
+Determining a single structure experimentally could take years of laboratory work.
+
+**What Deep Learning did.** AlphaFold predicts a protein's 3D structure from its amino acid
+sequence at an accuracy competitive with experimental methods. DeepMind has since published
+predicted structures for over 200 million proteins — effectively every protein known to
+science.
+
+**Why it required Deep Learning.** Nobody knew in advance which patterns in a sequence
+determine folding, so there was no list of features to hand a classical model. The network
+had to find them itself.
+
+**Recognition.** The 2024 Nobel Prize in Chemistry was awarded jointly to Demis Hassabis
+and John Jumper for this work, sharing the prize with David Baker.
+
+#### 2. Medical diagnosis from images — diabetic retinopathy screening
+
+**The problem.** Diabetic retinopathy is a leading cause of blindness and is largely
+preventable when caught early. Screening requires a trained specialist to examine a
+photograph of the retina, and in many regions there are not enough specialists to screen
+everyone at risk.
+
+**What Deep Learning did.** A network trained on roughly 128,000 retinal photographs reached
+sensitivity and specificity comparable to a panel of board-certified ophthalmologists.
+
+**Why it required Deep Learning.** The input is a raw photograph. The signs that matter —
+microaneurysms, small haemorrhages — are tiny, varied in appearance, and extremely hard to
+express as numeric rules.
+
+**Why this example matters here.** This is what our project would be if we had been handed
+images instead of 30 measured columns. The contrast is the lesson: raw images call for Deep
+Learning; a table of measured features does not.
+
+#### 3. Language — the Transformer and large language models
+
+**The problem.** Translating, summarising or answering in natural language requires tracking
+relationships between words that may be far apart. Earlier methods read text word by word
+and lost track over distance.
+
+**What Deep Learning did.** The Transformer architecture, published in 2017, replaced
+sequential reading with an *attention* mechanism that weighs every word against every other
+word simultaneously. It is the architecture underneath essentially every modern large
+language model.
+
+**Why it required Deep Learning.** The meaning of a sentence is not a list of measurable
+properties. Whatever carries it has to be learned from the text itself.
+
+**Sources for this section**
+
+- Jumper, J., et al. (2021). "Highly accurate protein structure prediction with AlphaFold."
+  *Nature*, 596, 583–589.
+  [doi:10.1038/s41586-021-03819-2](https://doi.org/10.1038/s41586-021-03819-2) ·
+  [PubMed](https://pubmed.ncbi.nlm.nih.gov/34265844/)
+- The Nobel Prize in Chemistry 2024 — awarded to David Baker, Demis Hassabis and John
+  Jumper. [nobelprize.org](https://www.nobelprize.org/prizes/chemistry/2024/summary/)
+- Gulshan, V., et al. (2016). "Development and Validation of a Deep Learning Algorithm for
+  Detection of Diabetic Retinopathy in Retinal Fundus Photographs." *JAMA*, 316(22),
+  2402–2410.
+  [doi:10.1001/jama.2016.17216](https://doi.org/10.1001/jama.2016.17216)
+- Vaswani, A., et al. (2017). "Attention Is All You Need." *Advances in Neural Information
+  Processing Systems 30 (NeurIPS 2017)*.
+  [arXiv:1706.03762](https://arxiv.org/abs/1706.03762)
+- Google *AI Experiments* — the collection suggested in the brief.
+  [experiments.withgoogle.com](https://experiments.withgoogle.com/collection/ai)
+
+---
+
+## Part 2 — The Perceptron
+
+### 2.1 What is a Perceptron? The biological neuron and the artificial one
+
+#### What it is
+
+The Perceptron is the earliest artificial neuron that could learn from examples. Frank
+Rosenblatt — a psychologist, not a computer scientist — introduced it in 1957–1958 at the
+Cornell Aeronautical Laboratory. It started as a simulation on an IBM 704 computer and then
+became dedicated hardware: the Mark I Perceptron, a machine that classified images seen
+through a 20 × 20 grid of 400 photocells, its weights physically stored in motor-driven
+potentiometers.
+
+As a model, the Perceptron is a **supervised binary classifier**: it takes a list of numbers
+(the features), combines them into a single score, and answers one of two classes — 1 or 0,
+malignant or benign. *Supervised*, because it learns from examples that already carry the
+correct answer.
+
+#### The biological neuron
+
+A neuron receives signals from other neurons through its **dendrites**. Each connection — a
+**synapse** — has a strength, and pushes the neuron either toward firing (excitatory) or
+away from it (inhibitory). The cell body (the **soma**) integrates everything that arrives.
+If the combined signal crosses a **threshold**, the neuron fires an electrical impulse down
+its **axon** to the neurons downstream; below the threshold, nothing happens. The impulse is
+all-or-nothing — a neuron never fires "a little".
+
+Learning, in the brain, is largely a change in synaptic strengths: connections that prove
+useful are reinforced.
+
+#### From biology to mathematics — two steps
+
+**McCulloch & Pitts (1943)** built the first mathematical neuron: binary inputs, a threshold,
+a yes/no output. They proved that networks of such units can compute logical functions. But
+the weights were set by hand — their neuron could *compute*, not *learn*.
+
+**Rosenblatt (1958)** supplied the missing piece: a rule that adjusts the weights
+automatically from labelled examples. The learning rule, not the neuron itself, is the
+invention — and it is exactly what we implement in Python in this project.
+
+#### The correspondence, term by term
+
+| Biological neuron | Perceptron |
+| --- | --- |
+| Dendrites carrying incoming signals | Inputs x₁ … xₙ |
+| Synaptic strength | Weights w₁ … wₙ |
+| Excitatory / inhibitory synapse | Positive / negative weight |
+| Soma integrating the signals | Weighted sum z = w·x + b |
+| Firing threshold | Activation function (step) |
+| All-or-nothing impulse on the axon | Output: 1 or 0 |
+
+One honest limit to this analogy: it is an inspiration, not a simulation. A real neuron is
+vastly more complex — chemical, temporal, adaptive in ways the Perceptron does not attempt
+to capture. The Perceptron borrows one idea from biology: weighted signals accumulating
+toward a threshold.
+
+**Sources for this section**
+
+- Rosenblatt, F. (1958). "The perceptron: a probabilistic model for information storage and
+  organization in the brain." *Psychological Review*, 65(6), 386–408 — the primary source.
+  [Full text](https://homepages.math.uic.edu/~lreyzin/papers/rosenblatt58.pdf) ·
+  [PubMed](https://pubmed.ncbi.nlm.nih.gov/13602029/)
+- McCulloch, W. S., & Pitts, W. (1943). "A logical calculus of the ideas immanent in nervous
+  activity." *Bulletin of Mathematical Biophysics*, 5, 115–133 — the first mathematical
+  neuron. [doi:10.1007/BF02478259](https://doi.org/10.1007/BF02478259)
+- Goodfellow, I., Bengio, Y., & Courville, A. (2016). *Deep Learning*. MIT Press, chapter 1
+  — the historical lineage from McCulloch–Pitts to modern networks.
+  [Free online](https://www.deeplearningbook.org/)
+
+---
+
+### 2.2 The mathematical function and its terms
+
+The Perceptron computes its answer in two stages: a weighted sum, then a decision.
+
+#### Stage 1 — the net input
+
+$$z = w_1 x_1 + w_2 x_2 + \dots + w_n x_n + b = \mathbf{w} \cdot \mathbf{x} + b$$
+
+| Term | Name | What it is |
+| --- | --- | --- |
+| $x_1 \dots x_n$ | Inputs (features) | The numbers describing one example — for us, the 30 measurements of one tumour |
+| $w_1 \dots w_n$ | Weights | One per feature: how much, and in which direction, that feature pushes the decision. **These are what the Perceptron learns.** |
+| $b$ | Bias | A constant added to the sum, independent of the inputs. It shifts the decision boundary away from the origin — without it, the boundary would be forced to pass through zero |
+| $z$ | Net input | The combined score: any real number, positive or negative |
+
+Some textbooks write the rule with an explicit threshold instead: *fire if*
+$\mathbf{w} \cdot \mathbf{x} \geq \theta$. The two forms are the same equation rearranged,
+with $b = -\theta$. Moving the threshold into the sum as a bias is simply more convenient,
+because then the bias can be learned exactly like a weight.
+
+#### Stage 2 — the decision
+
+$$\hat{y} = f(z)$$
+
+$$f(z) = 1 \quad \text{if } z \geq 0$$
+
+$$f(z) = 0 \quad \text{if } z < 0$$
+
+| Term | Name | What it is |
+| --- | --- | --- |
+| $f$ | Activation function | Here the Heaviside step function — detailed in section 2.4 |
+| $\hat{y}$ | Prediction ("y-hat") | The model's answer, 1 or 0 — distinct from $y$, the true label in the data |
+
+#### What the function is used for: a straight frontier
+
+Setting $z = 0$ defines the **decision boundary**: the set of points where
+$\mathbf{w} \cdot \mathbf{x} + b = 0$. With two features that is a straight line; with
+three, a flat plane; with our thirty, a 29-dimensional *hyperplane*. Everything on one side
+is classified 1, everything on the other side 0.
+
+So the Perceptron's entire job is: **find the weights and bias that place one flat boundary
+between the two classes.** A flat boundary is what "linear classifier" means — and it is the
+direct cause of the limitation we meet in section 2.6.
+
+#### In this project
+
+Thirty features means thirty weights plus one bias: **31 numbers to learn**, against the
+millions of a deep network. And each one stays readable — after training, the weight on
+`concave points_worst` tells us how strongly that measurement pushes a tumour toward
+"malignant". This is the interpretability advantage from section 1.2, made concrete.
+
+**Sources for this section**
+
+- Rosenblatt, F. (1958). "The perceptron: a probabilistic model for information storage and
+  organization in the brain." *Psychological Review*, 65(6), 386–408 — the original
+  formulation.
+  [Full text](https://homepages.math.uic.edu/~lreyzin/papers/rosenblatt58.pdf)
+- Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer, section 4.1.7
+  — the perceptron as a linear discriminant, and its geometry.
+  [Free PDF, Microsoft Research](https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/)
+- Goodfellow, I., Bengio, Y., & Courville, A. (2016). *Deep Learning*. MIT Press, chapter 6
+  — linear units and activation functions in modern notation.
+  [Free online](https://www.deeplearningbook.org/)
+
+---
+
+### 2.3 The learning rule
+
+#### The rule
+
+For each training example the Perceptron predicts, measures how wrong it was, and nudges
+every weight in the direction that would have reduced the mistake.
+
+$$\text{error} = y - \hat{y}$$
+
+$$w_i \leftarrow w_i + \eta \, (y - \hat{y}) \, x_i$$
+
+$$b \leftarrow b + \eta \, (y - \hat{y})$$
+
+| Term | Name | What it is |
+| --- | --- | --- |
+| $y$ | True label | What the answer should have been: 1 or 0 |
+| $\hat{y}$ | Prediction | What the model answered: 1 or 0 |
+| $y - \hat{y}$ | Error | Only three possible values: $+1$, $0$ or $-1$ |
+| $\eta$ | Learning rate ("eta") | The size of each step. Typically 0.01 to 0.1 |
+| $\leftarrow$ | Assignment | "becomes" — the new value replaces the old |
+
+#### Three cases, and only three
+
+Because $y$ and $\hat{y}$ are each either 0 or 1, the error can only take three values:
+
+| Situation | $y$ | $\hat{y}$ | Error | What happens |
+| --- | --- | --- | --- | --- |
+| Correct, positive | 1 | 1 | 0 | Nothing. No update at all |
+| Correct, negative | 0 | 0 | 0 | Nothing |
+| Missed a positive | 1 | 0 | $+1$ | Weights move **toward** this example |
+| False alarm | 0 | 1 | $-1$ | Weights move **away** from this example |
+
+That is the entire algorithm. **The Perceptron learns only from its mistakes** — a correct
+prediction changes nothing whatsoever.
+
+#### Why moving "toward" the example works
+
+Suppose the model should have answered 1 but answered 0. The error is $+1$, so every weight
+gains $\eta x_i$ — in vector terms, a scaled copy of $\mathbf{x}$ is added to $\mathbf{w}$,
+and $\eta$ is added to $b$. If the same example came round again, the new net input would be:
+
+$$z_{\text{new}} = (\mathbf{w} + \eta \mathbf{x}) \cdot \mathbf{x} + (b + \eta) = z_{\text{old}} + \eta \, (\mathbf{x} \cdot \mathbf{x} + 1)$$
+
+Since $\mathbf{x} \cdot \mathbf{x} + 1$ is always positive, $z$ has increased — pushing the
+model toward answering 1 next time. The mirror argument applies to a false alarm. The rule
+is not a heuristic: each update provably moves the score in the right direction.
+
+#### The learning rate
+
+$\eta$ controls how far each correction goes. Too large and the boundary lurches past good
+solutions; too small and training crawls.
+
+One subtlety worth knowing: if the weights start at exactly zero, $\eta$ has **no effect at
+all** on which examples get misclassified. Every weight and the bias are simply scaled by
+$\eta$ together, and the sign of $\mathbf{w} \cdot \mathbf{x} + b$ — which is all the
+prediction depends on — is unchanged. The learning rate only begins to matter once the
+weights are initialised to something non-zero, because then it sets the size of the
+corrections *relative* to those starting values.
+
+#### Does it always work? The convergence theorem
+
+Novikoff proved in 1962 that **if the two classes can be separated by a straight boundary,
+the Perceptron rule reaches a solution after a finite number of updates** — guaranteed,
+regardless of the starting weights.
+
+The converse is the catch: **if the classes are not linearly separable, the rule never
+settles.** It keeps correcting forever, the weights oscillate, and the error count never
+reaches zero. The algorithm has no way to recognise that no perfect answer exists.
+
+#### Other learning rules
+
+- **The delta rule (Widrow & Hoff, 1960)**, used in Adaline. It computes the error from the
+  continuous net input $z$ rather than the thresholded output $\hat{y}$, which makes the
+  error differentiable and the update a step of gradient descent on squared error. Because
+  of that, it converges to a stable solution even when the data is not separable. It is the
+  ancestor of the gradient descent used to train every modern neural network.
+- **The pocket algorithm (Gallant)**, a direct repair of the oscillation problem: run the
+  ordinary Perceptron rule, but keep a saved copy of the best weights seen so far and return
+  those at the end, rather than whatever the last update happened to leave behind.
+
+#### In this project
+
+The Breast Cancer Wisconsin data is close to linearly separable, but not perfectly. By the
+theorem, our error count therefore **falls quickly and then oscillates rather than reaching
+zero**. That is the algorithm behaving exactly as proved — not a bug in our code — and the
+convergence plot in the notebook shows it.
+
+**Sources for this section**
+
+- Rosenblatt, F. (1958). "The perceptron: a probabilistic model for information storage and
+  organization in the brain." *Psychological Review*, 65(6), 386–408 — the learning rule as
+  originally proposed.
+  [Full text](https://homepages.math.uic.edu/~lreyzin/papers/rosenblatt58.pdf)
+- Novikoff, A. B. (1962). "On convergence proofs on perceptrons." *Proceedings of the
+  Symposium on the Mathematical Theory of Automata*, 12, 615–622 — the convergence theorem.
+  [Original report, DTIC](https://apps.dtic.mil/sti/tr/pdf/AD0298258.pdf) ·
+  [Lecture treatment, Oregon State](https://classes.engr.oregonstate.edu/eecs/fall2023/ai534-400/unit2/convergence.html)
+- Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer, section 4.1.7
+  — the perceptron learning algorithm and its convergence behaviour.
+  [Free PDF, Microsoft Research](https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/)
+- Widrow, B., & Hoff, M. E. (1960). "Adaptive switching circuits." *IRE WESCON Convention
+  Record*, Part 4, 96–104 — the delta rule and Adaline.
+- Gallant, S. I. (1990). "Perceptron-based learning algorithms." *IEEE Transactions on
+  Neural Networks* — the pocket algorithm.
+
+---
+
+### 2.4 The activation function
+
+#### Which function
+
+The Perceptron uses the **Heaviside step function**, also called the unit step or threshold
+function:
+
+$$f(z) = 1 \quad \text{if } z \geq 0$$
+
+$$f(z) = 0 \quad \text{if } z < 0$$
+
+Its graph is flat at 0, jumps vertically at $z = 0$, then is flat at 1. There is no slope
+anywhere and no smooth transition — the jump is instantaneous.
+
+Some texts use $+1$ and $-1$ instead of 1 and 0. That changes the arithmetic of the update
+slightly but not the behaviour. We use 1 and 0, matching our labels: malignant = 1,
+benign = 0.
+
+#### What it is for
+
+Without it the model would output $z$, a continuous score — informative, but not an answer.
+The activation function is what turns a score into a decision. It is the mathematical
+equivalent of the biological threshold from section 2.1: below it nothing happens, at or
+above it the neuron fires.
+
+More generally, an activation function is what introduces **non-linearity**. In a
+single-layer Perceptron that hardly matters, but it is the reason deep networks can learn
+curved boundaries at all: stack linear layers with nothing between them and the whole stack
+collapses back into one linear layer, however many you use.
+
+#### Its fatal flaw, and why modern networks abandoned it
+
+The step function has a derivative of **zero everywhere it is defined**, and no derivative
+at all at $z = 0$.
+
+That matters enormously. Gradient descent — the method that trains every modern neural
+network — works by asking "how does the error change if I nudge this weight slightly?" With
+a step function the answer is always "not at all", because the output does not move until it
+jumps. There is no slope to descend.
+
+This is why the Perceptron needs its own purpose-built rule instead of gradient descent, and
+why it cannot be stacked into deep networks. Progress required replacing the step with a
+differentiable function:
+
+| Function | Shape | Why it replaced the step |
+| --- | --- | --- |
+| **Sigmoid** | Smooth S-curve from 0 to 1 | Differentiable everywhere; the output can be read as a probability |
+| **Tanh** | Smooth S-curve from $-1$ to 1 | Like sigmoid but centred on zero, which trains faster |
+| **ReLU** | 0 for negatives, $z$ for positives | Cheap to compute and does not flatten for large positive values — the default in modern deep networks |
+
+The step function is the ancestor of all three.
+
+#### In this project
+
+Our implementation is a single line of numpy:
+
+```python
+return np.where(z >= 0, 1, 0)    # 1 when the net input reaches the threshold, else 0
+```
+
+Note the `>=`: an example landing exactly on the boundary is classified as 1. That is a
+convention rather than a law, but it must be stated and applied consistently — it is
+precisely the kind of silent discrepancy that makes two implementations of the same
+algorithm disagree.
+
+**Sources for this section**
+
+- Rosenblatt, F. (1958). "The perceptron: a probabilistic model for information storage and
+  organization in the brain." *Psychological Review*, 65(6), 386–408 — the threshold
+  function as originally specified.
+  [Full text](https://homepages.math.uic.edu/~lreyzin/papers/rosenblatt58.pdf)
+- Goodfellow, I., Bengio, Y., & Courville, A. (2016). *Deep Learning*. MIT Press, chapter 6
+  — activation functions, differentiability, and why ReLU became the default.
+  [Free online](https://www.deeplearningbook.org/)
+- Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer, section 4.1.7
+  — the threshold activation in the context of linear discriminants.
+  [Free PDF, Microsoft Research](https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/)
+
+---
+
+### 2.5 The training process
+
+Section 2.3 defined how to correct the weights after a single example. Training is the loop
+that applies that correction across the whole dataset, repeatedly, until the model stops
+improving or we run out of patience.
+
+#### The algorithm
+
+```text
+1. Initialise the weights and the bias
+
+2. Repeat for each epoch (one full pass over the training data):
+
+     errors = 0
+
+     For each example (x, y) in the training set:
+         z     = w · x + b              compute the net input
+         ŷ     = f(z)                   apply the step function
+         error = y - ŷ                  compare with the truth
+
+         If error is not zero:
+             w      = w + η * error * x  correct every weight
+             b      = b + η * error      correct the bias
+             errors = errors + 1         count this mistake
+
+     Record errors for this epoch
+
+     If errors == 0:
+         stop early — the data is now perfectly separated
+
+3. Return the learned weights and bias
+```
+
+#### The four decisions inside that loop
+
+**Initialisation.** The weights have to start somewhere. Two common choices: all zeros, or
+small random values drawn from a normal distribution. We use small random values with a
+fixed random seed — random, so that the learning rate has a meaningful effect (see section
+2.3); seeded, so that every run of the notebook produces identical results. Reproducibility
+is not optional in work that will be graded and re-run by someone else.
+
+**An epoch** is one complete pass through the training set. A single pass almost never
+suffices, because correcting the weights for one example can break a case that was already
+right. Learning comes from repetition.
+
+**Stopping.** Two conditions end training: either an epoch completes with zero errors — the
+data is separated and no further update can occur — or we hit a maximum number of epochs we
+set in advance. For data that is not linearly separable, the maximum is the only thing that
+ever stops it, which is why it must exist.
+
+**Order matters.** Updates are applied immediately, one example at a time, so the order in
+which examples are visited changes the path training takes. This is *online* (or
+*stochastic*) learning, as opposed to *batch* learning where corrections are accumulated
+across the whole dataset and applied once. Rosenblatt's rule is online by design.
+
+#### What the error count tells us
+
+Recording `errors` for each epoch gives us a **convergence curve** — a plot of mistakes
+against epoch — and it is the single most informative diagnostic we have:
+
+| Curve shape | What it means |
+| --- | --- |
+| Falls to zero and stays there | The data is linearly separable and the Perceptron found the boundary |
+| Falls fast, then oscillates around a low value | Not separable; the rule keeps correcting forever, exactly as the theorem predicts |
+| Stays high and flat | Something is wrong — most often features on wildly different scales |
+| Swings wildly | The learning rate is too large |
+
+We produce this plot twice in the notebook: on synthetic data, and on the real patient data.
+
+#### In this project
+
+Training is fast — 569 examples, 30 features, a few hundred epochs: a fraction of a second on
+a CPU. We observe the second curve shape above, since the data is nearly but not perfectly
+separable.
+
+One critical point that belongs here rather than later: **feature scaling must happen before
+training, and must be fitted on the training set only.** The Perceptron adds `η·x` to the
+weights, so a feature measured in the thousands (`area_mean` ≈ 1000) produces updates a
+thousand times larger than one measured in hundredths (`smoothness_mean` ≈ 0.1). Without
+standardisation the large-valued features dominate entirely and training behaves badly. This
+is the single most common reason this project fails.
+
+**Sources for this section**
+
+- Rosenblatt, F. (1958). "The perceptron: a probabilistic model for information storage and
+  organization in the brain." *Psychological Review*, 65(6), 386–408 — the training
+  procedure as originally described.
+  [Full text](https://homepages.math.uic.edu/~lreyzin/papers/rosenblatt58.pdf)
+- Novikoff, A. B. (1962). "On convergence proofs on perceptrons." *Proceedings of the
+  Symposium on the Mathematical Theory of Automata*, 12, 615–622 — why training terminates
+  on separable data and not otherwise.
+  [Original report, DTIC](https://apps.dtic.mil/sti/tr/pdf/AD0298258.pdf)
+- Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer, section 4.1.7
+  — the training loop, online updates, and convergence.
+  [Free PDF, Microsoft Research](https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/)
+
+---
+
+### 2.6 The limitations of the Perceptron
+
+#### The root limitation
+
+Everything below follows from one fact established in section 2.2: the Perceptron draws a
+**single flat boundary**. If no straight line, plane or hyperplane separates the two classes,
+the Perceptron cannot represent the solution — not because it was trained badly, but because
+the solution is not in the set of functions it can express.
+
+#### The XOR problem
+
+The standard demonstration is the exclusive-OR function. Two binary inputs, output 1 when
+they differ:
+
+| $x_1$ | $x_2$ | XOR |
+| --- | --- | --- |
+| 0 | 0 | 0 |
+| 0 | 1 | 1 |
+| 1 | 0 | 1 |
+| 1 | 1 | 0 |
+
+Plot those four points. The two outputs of 1 sit at opposite corners — $(0,1)$ and $(1,0)$ —
+and the two outputs of 0 sit at the other two opposite corners, $(0,0)$ and $(1,1)$. The
+classes are diagonally interleaved, and **no straight line can separate them.** No choice of
+weights and bias exists. Training will never converge, however long it runs.
+
+The contrast makes the point sharper: **AND and OR are both linearly separable**, and a
+Perceptron learns either of them in a handful of epochs. XOR is barely more complicated, and
+it is impossible. We demonstrate this empirically in the notebook.
+
+#### The historical consequence
+
+Minsky and Papert analysed these limits rigorously in *Perceptrons* (1969). The book is
+often credited with triggering the first "AI winter" — a collapse in funding and interest in
+neural network research lasting into the 1980s.
+
+That narrative deserves a caveat, and knowing it is worth marks. Minsky and Papert were not
+wrong, and they did not claim multi-layer networks were useless; they observed that no
+*learning algorithm* was then known for training them. The missing piece arrived in 1986,
+when Rumelhart, Hinton and Williams popularised **backpropagation**, which trains networks of
+many layers — and a two-layer network solves XOR trivially. The limitation was real; the
+pessimism about it being permanent was not.
+
+#### The full list of limitations
+
+| Limitation | What it means | What solved it |
+| --- | --- | --- |
+| **Linear boundaries only** | Cannot represent XOR or any non-linearly-separable problem | Multi-layer networks with non-linear activations, trained by backpropagation |
+| **No convergence on non-separable data** | The rule oscillates forever and never settles (section 2.3) | The pocket algorithm, or the delta rule's gradient descent |
+| **No probability output** | The step function returns a hard 0 or 1 with no confidence attached | Logistic regression — a sigmoid in place of the step |
+| **Sensitive to feature scale** | Features with large values dominate the updates (section 2.5) | Standardisation before training |
+| **Binary only** | One Perceptron separates two classes, not more | One-vs-rest, or a multi-output layer |
+| **No notion of margin** | It stops at the *first* separating boundary it finds, which may sit uncomfortably close to the data and generalise poorly | Support Vector Machines, which maximise the distance to the nearest points |
+
+#### In this project
+
+Three of these show up in our results, and we name them in advance rather than discover them:
+
+1. **The convergence curve oscillates**, because the patient data is not perfectly linearly
+   separable. Expected behaviour, not a bug.
+2. **No probabilities**, which constrains how we can evaluate. We cannot produce a calibrated
+   risk score for a patient, and a standard ROC curve has no probability to work with — the
+   notebook uses the raw net input as a ranking score instead, with that caveat stated.
+3. **No margin**, so our boundary is *a* separating boundary rather than the *best* one. A
+   Support Vector Machine on the same data would likely generalise better.
+
+These are not weaknesses of our implementation. They are properties of the algorithm, and
+being able to state them precisely is what the brief's final question asks for.
+
+**Sources for this section**
+
+- Minsky, M., & Papert, S. (1969). *Perceptrons: An Introduction to Computational Geometry*.
+  MIT Press — the formal analysis of what single-layer perceptrons cannot compute.
+- Rumelhart, D. E., Hinton, G. E., & Williams, R. J. (1986). "Learning representations by
+  back-propagating errors." *Nature*, 323, 533–536 — backpropagation, which made multi-layer
+  networks trainable. [doi:10.1038/323533a0](https://doi.org/10.1038/323533a0) ·
+  [Harvard ADS](https://ui.adsabs.harvard.edu/abs/1986Natur.323..533R/abstract)
+- Cortes, C., & Vapnik, V. (1995). "Support-vector networks." *Machine Learning*, 20(3),
+  273–297 — maximum-margin classification, the answer to the Perceptron's margin problem.
+  [doi:10.1007/BF00994018](https://doi.org/10.1007/BF00994018) ·
+  [Full text](https://homepages.math.uic.edu/~lreyzin/papers/cortes95.pdf)
+- Novikoff, A. B. (1962). "On convergence proofs on perceptrons." *Proceedings of the
+  Symposium on the Mathematical Theory of Automata*, 12, 615–622 — the separability
+  condition. [Original report, DTIC](https://apps.dtic.mil/sti/tr/pdf/AD0298258.pdf)
+
+---
+
+## Bibliography
+
+All sources cited in this document, in alphabetical order by author. Each section above also
+lists the specific sources supporting its claims.
+
+- Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer.
+  [Free PDF, Microsoft Research](https://www.microsoft.com/en-us/research/publication/pattern-recognition-machine-learning/)
+- Cortes, C., & Vapnik, V. (1995). "Support-vector networks." *Machine Learning*, 20(3),
+  273–297. [doi:10.1007/BF00994018](https://doi.org/10.1007/BF00994018)
+- Dua, D., & Graff, C. *Breast Cancer Wisconsin (Diagnostic) Data Set*. UCI Machine Learning
+  Repository.
+  [Dataset page](https://archive.ics.uci.edu/dataset/17/breast+cancer+wisconsin+diagnostic)
+- Gallant, S. I. (1990). "Perceptron-based learning algorithms." *IEEE Transactions on Neural
+  Networks*.
+- Goodfellow, I., Bengio, Y., & Courville, A. (2016). *Deep Learning*. MIT Press.
+  [Free online](https://www.deeplearningbook.org/)
+- Google. *AI Experiments*.
+  [experiments.withgoogle.com](https://experiments.withgoogle.com/collection/ai)
+- Grinsztajn, L., Oyallon, E., & Varoquaux, G. (2022). "Why do tree-based models still
+  outperform deep learning on typical tabular data?" *NeurIPS 2022, Datasets and Benchmarks
+  Track*. [arXiv:2207.08815](https://arxiv.org/abs/2207.08815)
+- Gulshan, V., et al. (2016). "Development and Validation of a Deep Learning Algorithm for
+  Detection of Diabetic Retinopathy in Retinal Fundus Photographs." *JAMA*, 316(22),
+  2402–2410. [doi:10.1001/jama.2016.17216](https://doi.org/10.1001/jama.2016.17216)
+- Jumper, J., et al. (2021). "Highly accurate protein structure prediction with AlphaFold."
+  *Nature*, 596, 583–589.
+  [doi:10.1038/s41586-021-03819-2](https://doi.org/10.1038/s41586-021-03819-2)
+- Kursa, M. B., & Rudnicki, W. R. (2010). "Feature Selection with the Boruta Package."
+  *Journal of Statistical Software*, 36(11).
+  [doi:10.18637/jss.v036.i11](https://doi.org/10.18637/jss.v036.i11)
+- LeCun, Y., Bengio, Y., & Hinton, G. (2015). "Deep learning." *Nature*, 521(7553), 436–444.
+  [doi:10.1038/nature14539](https://doi.org/10.1038/nature14539)
+- McCulloch, W. S., & Pitts, W. (1943). "A logical calculus of the ideas immanent in nervous
+  activity." *Bulletin of Mathematical Biophysics*, 5, 115–133.
+  [doi:10.1007/BF02478259](https://doi.org/10.1007/BF02478259)
+- Minsky, M., & Papert, S. (1969). *Perceptrons: An Introduction to Computational Geometry*.
+  MIT Press.
+- Mitchell, T. (1997). *Machine Learning*. McGraw-Hill.
+- The Nobel Prize in Chemistry 2024.
+  [nobelprize.org](https://www.nobelprize.org/prizes/chemistry/2024/summary/)
+- Novikoff, A. B. (1962). "On convergence proofs on perceptrons." *Proceedings of the
+  Symposium on the Mathematical Theory of Automata*, 12, 615–622.
+  [Original report, DTIC](https://apps.dtic.mil/sti/tr/pdf/AD0298258.pdf)
+- Rosenblatt, F. (1958). "The perceptron: a probabilistic model for information storage and
+  organization in the brain." *Psychological Review*, 65(6), 386–408.
+  [Full text](https://homepages.math.uic.edu/~lreyzin/papers/rosenblatt58.pdf)
+- Rudin, C. (2019). "Stop explaining black box machine learning models for high stakes
+  decisions and use interpretable models instead." *Nature Machine Intelligence*, 1, 206–215.
+  [arXiv:1811.10154](https://arxiv.org/abs/1811.10154)
+- Rumelhart, D. E., Hinton, G. E., & Williams, R. J. (1986). "Learning representations by
+  back-propagating errors." *Nature*, 323, 533–536.
+  [doi:10.1038/323533a0](https://doi.org/10.1038/323533a0)
+- Samuel, A. L. (1959). "Some Studies in Machine Learning Using the Game of Checkers."
+  *IBM Journal of Research and Development*, 3(3), 210–229.
+  [Full text, MIT](https://people.csail.mit.edu/brooks/idocs/Samuel.pdf)
+- Vaswani, A., et al. (2017). "Attention Is All You Need." *Advances in Neural Information
+  Processing Systems 30 (NeurIPS 2017)*. [arXiv:1706.03762](https://arxiv.org/abs/1706.03762)
+- Widrow, B., & Hoff, M. E. (1960). "Adaptive switching circuits." *IRE WESCON Convention
+  Record*, Part 4, 96–104.
